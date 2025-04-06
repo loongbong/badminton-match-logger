@@ -58,48 +58,23 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentHistoryFilter = 'all';
     let isShowingAllHistory = false;
 
-    // --- Functions ---
-    const getTodayDate = () => { /* ... no change ... */ const today = new Date(); const year = today.getFullYear(); const month = String(today.getMonth() + 1).padStart(2, '0'); const day = String(today.getDate()).padStart(2, '0'); return `${year}-${month}-${day}`; };
-    const getCanonicalTeamName = (p1, p2) => { /* ... no change ... */ const player1 = p1.trim(); const player2 = p2 ? p2.trim() : ''; if (!player1) return 'Unknown Team'; if (!player2) return player1; return [player1, player2].sort().join(' / '); };
-
-    /** --- MODIFIED: Sorts by date before rendering --- */
-    const renderHistory = (logsToRender = [], showAll = false) => {
-        historyListDiv.innerHTML = '';
-
-        // Create a sorted copy (descending by date - newest first)
-        // Compare dates as strings (YYYY-MM-DD format sorts correctly)
-        // Or use new Date() for robustness: new Date(b.date) - new Date(a.date)
-        const sortedLogs = [...logsToRender].sort((a, b) => b.date.localeCompare(a.date));
-
-        const logCount = sortedLogs.length;
-        const displayLimit = (showAll || logCount <= DEFAULT_HISTORY_LIMIT) ? logCount : DEFAULT_HISTORY_LIMIT;
-        const displayLogs = sortedLogs.slice(0, displayLimit); // Get the N newest logs
-
-        if (logCount === 0) {
-            if (currentHistoryFilter !== 'all') { historyListDiv.innerHTML = `<p>No matches found for the selected period (${currentHistoryFilter}).</p>`; }
-            else { historyListDiv.innerHTML = '<p>No matches logged yet.</p>'; }
-            if (historyLoaderDiv) historyLoaderDiv.style.display = 'none';
-            return;
-        }
-
-        // Iterate the correctly sorted and sliced logs
-        displayLogs.forEach(match => {
-            const matchElement = document.createElement('div'); matchElement.classList.add('history-item');
-            const yourTeamDisplay = match.yourTeamName || `You${match.yourPartner ? ' & ' + match.yourPartner : ''}`;
-            const opponentTeamDisplay = match.opponentTeamName || `${match.opponent1}${match.opponent2 ? ' & ' + match.opponent2 : ''}`;
-            const score = `${match.yourScore} - ${match.theirScore}`; const resultClass = match.win ? 'result-win' : 'result-loss'; const resultText = match.win ? 'WIN' : 'LOSS';
-            matchElement.innerHTML = `<div class="history-details"> <span class="history-date">${match.date}</span> <span class="history-teams"><span class="team-you">${yourTeamDisplay}</span><span class="vs-separator"> vs </span><span class="team-opponent">${opponentTeamDisplay}</span></span> </div> <div class="history-score"> <span>Score: ${score}</span> <span class="history-result ${resultClass}">${resultText}</span> </div> <div class="history-actions"> <button class="btn-edit" title="Edit this match" data-match-id="${match.id}">✏️</button> <button class="btn-delete" title="Delete this match" data-match-id="${match.id}">×</button> </div>`;
-            historyListDiv.appendChild(matchElement);
-        });
-
-        // Show/Hide the "Show All" button
-        if (historyLoaderDiv) {
-            if (!showAll && logCount > DEFAULT_HISTORY_LIMIT) { historyLoaderDiv.style.display = 'block'; }
-            else { historyLoaderDiv.style.display = 'none'; }
-        }
+    // --- Date Helper ---
+    /**
+     * Formats a Date object into YYYY-MM-DD string based on local time.
+     * @param {Date} dateObj - The Date object.
+     * @returns {string} Formatted date string.
+     */
+    const formatDate = (dateObj) => {
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(dateObj.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     };
 
-    // --- All other functions remain unchanged ---
+    // --- Core Functions (Keep unchanged ones collapsed for brevity if needed) ---
+    const getTodayDate = () => { return formatDate(new Date()); }; // Use helper
+    const getCanonicalTeamName = (p1, p2) => { const player1 = p1.trim(); const player2 = p2 ? p2.trim() : ''; if (!player1) return 'Unknown Team'; if (!player2) return player1; return [player1, player2].sort().join(' / '); };
+    const renderHistory = (logsToRender = [], showAll = false) => { historyListDiv.innerHTML = ''; const sortedLogs = [...logsToRender].sort((a, b) => b.date.localeCompare(a.date)); const logCount = sortedLogs.length; const displayLimit = (showAll || logCount <= DEFAULT_HISTORY_LIMIT) ? logCount : DEFAULT_HISTORY_LIMIT; const displayLogs = sortedLogs.slice(0, displayLimit); if (logCount === 0) { if (currentHistoryFilter !== 'all') { historyListDiv.innerHTML = `<p>No matches found for the selected period (${currentHistoryFilter}).</p>`; } else { historyListDiv.innerHTML = '<p>No matches logged yet.</p>'; } if (historyLoaderDiv) historyLoaderDiv.style.display = 'none'; return; } displayLogs.forEach(match => { const matchElement = document.createElement('div'); matchElement.classList.add('history-item'); const yourTeamDisplay = match.yourTeamName || `You${match.yourPartner ? ' & ' + match.yourPartner : ''}`; const opponentTeamDisplay = match.opponentTeamName || `${match.opponent1}${match.opponent2 ? ' & ' + match.opponent2 : ''}`; const score = `${match.yourScore} - ${match.theirScore}`; const resultClass = match.win ? 'result-win' : 'result-loss'; const resultText = match.win ? 'WIN' : 'LOSS'; matchElement.innerHTML = `<div class="history-details"> <span class="history-date">${match.date}</span> <span class="history-teams"><span class="team-you">${yourTeamDisplay}</span><span class="vs-separator"> vs </span><span class="team-opponent">${opponentTeamDisplay}</span></span> </div> <div class="history-score"> <span>Score: ${score}</span> <span class="history-result ${resultClass}">${resultText}</span> </div> <div class="history-actions"> <button class="btn-edit" title="Edit this match" data-match-id="${match.id}">✏️</button> <button class="btn-delete" title="Delete this match" data-match-id="${match.id}">×</button> </div>`; historyListDiv.appendChild(matchElement); }); if (historyLoaderDiv) { if (!showAll && logCount > DEFAULT_HISTORY_LIMIT) { historyLoaderDiv.style.display = 'block'; } else { historyLoaderDiv.style.display = 'none'; } } };
     const extractUniquePlayerNames = (logs) => { const names = new Set(); logs.forEach(match => { const partner = match.yourPartner?.trim(); const opp1 = match.opponent1?.trim(); const opp2 = match.opponent2?.trim(); if (partner) names.add(partner); if (opp1) names.add(opp1); if (opp2) names.add(opp2); }); return [...names].sort(); };
     const populateNameDatalist = (names) => { if (!playerNamesDatalist) return; playerNamesDatalist.innerHTML = ''; names.forEach(name => { const option = document.createElement('option'); option.value = name; playerNamesDatalist.appendChild(option); }); };
     const populateFilterDropdowns = (logs) => { const currentYourTeam = filterYourTeamSelect.value; const currentOpponentTeam = filterOpponentTeamSelect.value; filterYourTeamSelect.innerHTML = '<option value="ALL">All My Teams (Overall)</option>'; filterOpponentTeamSelect.innerHTML = '<option value="ALL">All Opponents</option>'; const yourTeamNames = new Set(); const opponentTeamNames = new Set(); logs.forEach(match => { if (match.yourTeamName) yourTeamNames.add(match.yourTeamName); if (match.opponentTeamName) opponentTeamNames.add(match.opponentTeamName); }); [...yourTeamNames].sort().forEach(name => { const option = document.createElement('option'); option.value = name; option.textContent = name; filterYourTeamSelect.appendChild(option); }); [...opponentTeamNames].sort().forEach(name => { const option = document.createElement('option'); option.value = name; option.textContent = name; filterOpponentTeamSelect.appendChild(option); }); if (filterYourTeamSelect.querySelector(`option[value="${CSS.escape(currentYourTeam)}"]`)) { filterYourTeamSelect.value = currentYourTeam; } if (filterOpponentTeamSelect.querySelector(`option[value="${CSS.escape(currentOpponentTeam)}"]`)) { filterOpponentTeamSelect.value = currentOpponentTeam; } };
@@ -114,45 +89,46 @@ document.addEventListener('DOMContentLoaded', () => {
     const handleEditClick = (matchId) => { hideStatusMessage(); const matchToEdit = matchLogs.find(log => log.id === matchId); if (!matchToEdit) return; matchDateInput.value = matchToEdit.date; yourPartnerInput.value = matchToEdit.yourPartner; opponent1Input.value = matchToEdit.opponent1; opponent2Input.value = matchToEdit.opponent2; yourScoreInput.value = matchToEdit.yourScore; theirScoreInput.value = matchToEdit.theirScore; editingMatchIdInput.value = matchId; if(formHeader) formHeader.textContent = 'Edit Match'; logMatchBtn.textContent = 'Update Match'; cancelEditBtn.style.display = 'inline-block'; logForm.scrollIntoView({ behavior: 'smooth' }); matchDateInput.focus(); };
     const handleCancelEdit = () => { hideStatusMessage(); editingMatchIdInput.value = ''; logForm.reset(); matchDateInput.value = getTodayDate(); if(formHeader) formHeader.textContent = 'Log New Match'; logMatchBtn.textContent = 'Log Match'; cancelEditBtn.style.display = 'none'; };
 
-    /** --- UPDATED: Filters logs by preset date range --- */
+    /** --- UPDATED: Filters logs by preset date range using local date components --- */
     const filterLogsByPreset = (preset) => {
         const todayObj = new Date();
-        todayObj.setHours(0, 0, 0, 0); // Normalize today to start of day
-        const todayStr = todayObj.toISOString().slice(0, 10); // "YYYY-MM-DD"
+        todayObj.setHours(0, 0, 0, 0); // Use start of today for comparisons
 
-        let startDateStr;
+        const todayStr = formatDate(todayObj); // YYYY-MM-DD of today
+        let startFilterDateStr; // YYYY-MM-DD of the start of the range
 
         switch (preset) {
             case 'today':
-                startDateStr = todayStr;
+                startFilterDateStr = todayStr;
                 break;
-            case 'week': { // Calculate start of the current week (assuming Monday is start)
+            case 'week': {
                 const startDateWeek = new Date(todayObj); // Clone today
                 const dayOfWeek = startDateWeek.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
                 const diff = startDateWeek.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1); // Adjust to Monday
                 startDateWeek.setDate(diff);
-                startDateStr = startDateWeek.toISOString().slice(0, 10);
+                startFilterDateStr = formatDate(startDateWeek);
                 break;
             }
-            case 'month': { // Calculate start of the current month
-                const startDateMonth = new Date(todayObj.getFullYear(), todayObj.getMonth(), 1);
-                startDateStr = startDateMonth.toISOString().slice(0, 10);
+            case 'month': {
+                const startDateMonth = new Date(todayObj.getFullYear(), todayObj.getMonth(), 1); // First day of current month
+                startFilterDateStr = formatDate(startDateMonth);
                 break;
             }
             case 'all':
             default:
-                return [...matchLogs]; // Return a copy of all logs
+                return [...matchLogs]; // Return all logs (no date filter)
         }
 
-        // Filter logs from startDate (inclusive) up to today (inclusive)
-        return matchLogs.filter(log => log.date >= startDateStr && log.date <= todayStr);
+        // Filter logs: log.date must be >= startFilterDateStr AND <= todayStr
+        // String comparison works correctly for YYYY-MM-DD format
+        return matchLogs.filter(log => log.date >= startFilterDateStr && log.date <= todayStr);
     };
 
      /** --- UPDATED: Applies the currently selected quick filter --- */
      const applyCurrentHistoryFilter = (showAll = isShowingAllHistory) => {
-        isShowingAllHistory = showAll; // Update state
-        const filteredLogs = filterLogsByPreset(currentHistoryFilter);
-        renderHistory(filteredLogs, isShowingAllHistory); // Pass showAll flag
+        isShowingAllHistory = showAll;
+        const filteredLogs = filterLogsByPreset(currentHistoryFilter); // Use the function
+        renderHistory(filteredLogs, isShowingAllHistory); // Render based on filtered logs
 
         // Update active state on buttons
         if (quickHistoryFiltersContainer) {
@@ -168,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!button) return;
 
         const filterType = button.dataset.filter;
-        if (!filterType) return;
+        if (!filterType || filterType === currentHistoryFilter) return; // Do nothing if same filter clicked
 
         currentHistoryFilter = filterType; // Update state
         isShowingAllHistory = false; // Reset show all state when changing filter
@@ -177,11 +153,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
      /** --- UPDATED: Handles click on "Show All History" button --- */
     const handleShowAllHistory = () => {
-        applyCurrentHistoryFilter(true); // Re-apply current filter, showing all results
+        applyCurrentHistoryFilter(true); // Re-apply current filter, showing all
     };
 
-    /** --- UPDATED: updateUI calls applyCurrentHistoryFilter --- */
+
+    /** Update UI Helper - Calls applyCurrentHistoryFilter */
     const updateUI = () => {
+        //renderHistory(); // Now handled by applyCurrentHistoryFilter
         renderOverallStats();
         populateFilterDropdowns(matchLogs);
         renderDetailedStats();
@@ -192,9 +170,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    const handleLogMatch = (event) => { event.preventDefault(); const editingId = editingMatchIdInput.value; const date = matchDateInput.value; const yourPartner = yourPartnerInput.value.trim(); const opponent1 = opponent1Input.value.trim(); const opponent2 = opponent2Input.value.trim(); const yourScore = parseInt(yourScoreInput.value); const theirScore = parseInt(theirScoreInput.value); if (!date || !opponent1 || isNaN(yourScore) || isNaN(theirScore)) { alert("Fill Date, Opponent 1, and scores."); return; } if (yourScore < 0 || theirScore < 0) { alert("Scores >= 0."); return; } if (yourScore === theirScore) { alert("Scores cannot be same."); return; } if (!editingId) { if (yourPartner && (yourPartner === opponent1 || (opponent2 && yourPartner === opponent2))) { const ok = window.confirm(`Warning: Partner "${yourPartner}" also opponent?`); if (!ok) return; } if (opponent1 && opponent2 && opponent1 === opponent2) { const ok = window.confirm(`Warning: Opponents "${opponent1}" same?`); if (!ok) return; } } const win = yourScore > theirScore; const yourTeamName = getCanonicalTeamName("You", yourPartner); const opponentTeamName = getCanonicalTeamName(opponent1, opponent2); const matchData = { id: editingId || Date.now().toString(), date: date, yourPartner: yourPartner, opponent1: opponent1, opponent2: opponent2, yourScore: yourScore, theirScore: theirScore, win: win, yourTeamName: yourTeamName, opponentTeamName: opponentTeamName }; let message = "Match logged successfully!"; if (editingId) { const indexToUpdate = matchLogs.findIndex(log => log.id === editingId); if (indexToUpdate > -1) { matchLogs[indexToUpdate] = matchData; message = "Match updated successfully!"; } else { alert("Error updating match."); handleCancelEdit(); return; } } else { matchLogs.unshift(matchData); } saveLogs(); updateUI(); if (editingId) { handleCancelEdit(); } else { yourPartnerInput.value = ''; opponent1Input.value = ''; opponent2Input.value = ''; yourScoreInput.value = ''; theirScoreInput.value = ''; } showStatusMessage(message, 'success'); };
-    const handleResetAll = () => { const confirmed = window.confirm("Delete ALL match logs?"); if (confirmed) { matchLogs = []; localStorage.removeItem(MATCH_LOGS_KEY); updateUI(); alert("All logs deleted."); } };
-    const handleHistoryClick = (event) => { const targetButton = event.target.closest('button'); if (!targetButton) return; const matchId = targetButton.dataset.matchId; if (!matchId) return; if (targetButton.classList.contains('btn-delete')) { const matchToDelete = matchLogs.find(log => log.id === matchId); const confirmMessage = matchToDelete ? `Delete match from ${matchToDelete.date}?` : "Delete this match log?"; const confirmed = window.confirm(confirmMessage); if (confirmed) { matchLogs = matchLogs.filter(log => log.id !== matchId); saveLogs(); updateUI(); } } else if (targetButton.classList.contains('btn-edit')) { handleEditClick(matchId); } };
+    const handleLogMatch = (event) => { event.preventDefault(); const editingId = editingMatchIdInput.value; const date = matchDateInput.value; const yourPartner = yourPartnerInput.value.trim(); const opponent1 = opponent1Input.value.trim(); const opponent2 = opponent2Input.value.trim(); const yourScore = parseInt(yourScoreInput.value); const theirScore = parseInt(theirScoreInput.value); if (!date || !opponent1 || isNaN(yourScore) || isNaN(theirScore)) { alert("Fill Date, Opponent 1, and scores."); return; } if (yourScore < 0 || theirScore < 0) { alert("Scores >= 0."); return; } if (yourScore === theirScore) { alert("Scores cannot be same."); return; } if (!editingId) { if (yourPartner && (yourPartner === opponent1 || (opponent2 && yourPartner === opponent2))) { const ok = window.confirm(`Warning: Partner "${yourPartner}" also opponent?`); if (!ok) return; } if (opponent1 && opponent2 && opponent1 === opponent2) { const ok = window.confirm(`Warning: Opponents "${opponent1}" same?`); if (!ok) return; } } const win = yourScore > theirScore; const yourTeamName = getCanonicalTeamName("You", yourPartner); const opponentTeamName = getCanonicalTeamName(opponent1, opponent2); const matchData = { id: editingId || Date.now().toString(), date: date, yourPartner: yourPartner, opponent1: opponent1, opponent2: opponent2, yourScore: yourScore, theirScore: theirScore, win: win, yourTeamName: yourTeamName, opponentTeamName: opponentTeamName }; let message = "Match logged successfully!"; if (editingId) { const indexToUpdate = matchLogs.findIndex(log => log.id === editingId); if (indexToUpdate > -1) { matchLogs[indexToUpdate] = matchData; message = "Match updated successfully!"; } else { alert("Error updating match."); handleCancelEdit(); return; } } else { matchLogs.unshift(matchData); } saveLogs(); isShowingAllHistory = false; /* Reset showAll on new log */ updateUI(); if (editingId) { handleCancelEdit(); } else { yourPartnerInput.value = ''; opponent1Input.value = ''; opponent2Input.value = ''; yourScoreInput.value = ''; theirScoreInput.value = ''; opponent1Input.focus(); } showStatusMessage(message, 'success'); };
+    const handleResetAll = () => { const confirmed = window.confirm("Delete ALL match logs?"); if (confirmed) { matchLogs = []; localStorage.removeItem(MATCH_LOGS_KEY); isShowingAllHistory = false; /* Reset showAll */ updateUI(); alert("All logs deleted."); } };
+    const handleHistoryClick = (event) => { const targetButton = event.target.closest('button'); if (!targetButton) return; const matchId = targetButton.dataset.matchId; if (!matchId) return; if (targetButton.classList.contains('btn-delete')) { const matchToDelete = matchLogs.find(log => log.id === matchId); const confirmMessage = matchToDelete ? `Delete match from ${matchToDelete.date}?` : "Delete this match log?"; const confirmed = window.confirm(confirmMessage); if (confirmed) { matchLogs = matchLogs.filter(log => log.id !== matchId); saveLogs(); isShowingAllHistory = false; /* Reset showAll? Or keep current view? Let's reset. */ updateUI(); } } else if (targetButton.classList.contains('btn-edit')) { handleEditClick(matchId); } };
     const handleApplyFilters = () => { renderDetailedStats(); };
     const handleStep = (event) => { const button = event.target.closest('.stepper-btn'); if (!button) return; const targetInputId = button.dataset.target; const targetInput = document.getElementById(targetInputId); if (!targetInput) return; const step = parseFloat(button.dataset.step || targetInput.step || 1); const min = parseFloat(targetInput.min); const max = parseFloat(targetInput.max); let currentValue = parseFloat(targetInput.value) || 0; if (button.classList.contains('plus')) { if (!isNaN(max) && currentValue + step > max) { currentValue = max; } else { currentValue += step; } } else if (button.classList.contains('minus')) { if (!isNaN(min) && currentValue - step < min) { currentValue = min; } else { currentValue -= step; } } if (!isNaN(min)) currentValue = Math.max(min, currentValue); if (!isNaN(max)) currentValue = Math.min(max, currentValue); if (step < 1) { const precision = Math.max(step.toString().split('.')[1]?.length || 0, 0); targetInput.value = currentValue.toFixed(precision); } else { targetInput.value = currentValue; } };
     const handleQuickScore = (event) => { if (event.target.id === 'btn-quick-win') { yourScoreInput.value = 21; } else if (event.target.id === 'btn-quick-lose') { theirScoreInput.value = 21; } };
@@ -202,25 +180,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const handleScroll = () => { if (backToTopButton) { if (window.scrollY > 300) { backToTopButton.classList.add('visible'); } else { backToTopButton.classList.remove('visible'); } } };
     const scrollToTop = () => { window.scrollTo({ top: 0, behavior: 'smooth' }); };
     const handleExportLogs = () => { if (matchLogs.length === 0) { alert("No logs to export."); return; } try { const jsonData = JSON.stringify(matchLogs, null, 2); const blob = new Blob([jsonData], { type: 'application/json' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; const dateStamp = new Date().toISOString().slice(0, 10); link.download = `badminton_logs_${dateStamp}.json`; document.body.appendChild(link); link.click(); document.body.removeChild(link); setTimeout(() => URL.revokeObjectURL(url), 100); } catch (error) { console.error("Error exporting logs:", error); alert("Failed to export logs."); } };
-    const handleImportLogs = (event) => { const file = event.target.files[0]; if (!file) return; if (!file.type || (file.type !== 'application/json' && !file.name.endsWith('.json'))) { alert("Please select a valid JSON file (.json)."); importJsonInput.value = null; return; } const reader = new FileReader(); reader.onload = (e) => { const fileContent = e.target.result; let importedLogs; const confirmed = window.confirm("Importing will REPLACE all current logs.\nAre you sure?"); if (!confirmed) { importJsonInput.value = null; return; } try { importedLogs = JSON.parse(fileContent); if (!Array.isArray(importedLogs) || (importedLogs.length > 0 && typeof importedLogs[0].id === 'undefined')) { throw new Error("Invalid log file format."); } matchLogs = importedLogs; saveLogs(); updateUI(); alert(`Successfully imported ${importedLogs.length} match logs!`); } catch (error) { console.error("Error importing file:", error); alert(`Import failed. Ensure file is valid JSON.\nError: ${error.message}`); } finally { importJsonInput.value = null; } }; reader.onerror = () => { console.error("Error reading file"); alert("Error reading selected file."); importJsonInput.value = null; }; reader.readAsText(file); };
-
+    const handleImportLogs = (event) => { const file = event.target.files[0]; if (!file) return; if (!file.type || (file.type !== 'application/json' && !file.name.endsWith('.json'))) { alert("Please select a valid JSON file (.json)."); importJsonInput.value = null; return; } const reader = new FileReader(); reader.onload = (e) => { const fileContent = e.target.result; let importedLogs; const confirmed = window.confirm("Importing will REPLACE all current logs.\nAre you sure?"); if (!confirmed) { importJsonInput.value = null; return; } try { importedLogs = JSON.parse(fileContent); if (!Array.isArray(importedLogs) || (importedLogs.length > 0 && typeof importedLogs[0].id === 'undefined')) { throw new Error("Invalid log file format."); } matchLogs = importedLogs; saveLogs(); isShowingAllHistory = false; // Reset view after import updateUI(); alert(`Successfully imported ${importedLogs.length} match logs!`); } catch (error) { console.error("Error importing file:", error); alert(`Import failed. Ensure file is valid JSON.\nError: ${error.message}`); } finally { importJsonInput.value = null; } }; reader.onerror = () => { console.error("Error reading file"); alert("Error reading selected file."); importJsonInput.value = null; }; reader.readAsText(file); };
 
     // --- Initial Setup ---
     matchDateInput.value = getTodayDate();
-    // Set 'All Time' as active initially
-    document.querySelector('.btn-quick-filter[data-filter="all"]')?.classList.add('active');
-    updateUI(); // Render everything including default history view
-
+    document.querySelector('.btn-quick-filter[data-filter="all"]')?.classList.add('active'); // Set default active button
+    updateUI(); // Initial render
 
     // --- Event Listeners ---
     logForm.addEventListener('submit', handleLogMatch);
     resetAllBtn.addEventListener('click', handleResetAll);
     filterStatsBtn.addEventListener('click', handleApplyFilters);
-    historyListDiv.addEventListener('click', handleHistoryClick); // Handles Edit/Delete
+    historyListDiv.addEventListener('click', handleHistoryClick);
     cancelEditBtn.addEventListener('click', handleCancelEdit);
     if(btnQuickWin) btnQuickWin.addEventListener('click', handleQuickScore);
     if(btnQuickLose) btnQuickLose.addEventListener('click', handleQuickScore);
-    logForm.addEventListener('click', handleStep); // Handles +/- steppers
+    logForm.addEventListener('click', handleStep);
     if (menuToggle) { menuToggle.addEventListener('click', handleMenuToggle); }
     if (navLinksContainer) { navLinksContainer.querySelectorAll('a').forEach(link => { link.addEventListener('click', () => { if (mainNav.classList.contains('nav-open')) { mainNav.classList.remove('nav-open'); menuToggle.setAttribute('aria-expanded', 'false'); } }); }); }
     window.addEventListener('scroll', handleScroll);
@@ -228,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (exportJsonBtn) { exportJsonBtn.addEventListener('click', handleExportLogs); }
     if (importJsonTriggerBtn) { importJsonTriggerBtn.addEventListener('click', () => importJsonInput.click()); }
     if (importJsonInput) { importJsonInput.addEventListener('change', handleImportLogs); }
-    // NEW History Filter Listeners
+    // --- NEW History Filter Listeners ---
     if (quickHistoryFiltersContainer) { quickHistoryFiltersContainer.addEventListener('click', handleQuickFilterClick); }
     if (showAllHistoryBtn) { showAllHistoryBtn.addEventListener('click', handleShowAllHistory); }
 
