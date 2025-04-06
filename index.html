@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Badminton Match Logger</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏸</text></svg>">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+</head>
+<body>
+
+    <nav id="main-nav"> <button id="menu-toggle" aria-label="Toggle Menu" aria-expanded="false">☰</button> <div class="nav-links"> <a href="#log-section">Log Match</a> <a href="#stats-section">Stats</a> <a href="#history-section">History</a> <a href="#management-section">Manage</a> </div> </nav>
+
+    <div class="logger-container">
+        <h1>🏸 Badminton Match Logger</h1>
+        <p class="subtitle">Match data is stored privately in your browser's local storage.</p>
+
+        <section id="log-section" class="input-section card">
+             <h2>Log New Match</h2>
+            <form id="log-form" aria-labelledby="log-form-heading"> <h2 id="log-form-heading" class="visually-hidden">Log Match Form</h2> <input type="hidden" id="editing-match-id"> <div class="form-grid"> <div class="input-group"><label for="match-date">Date:</label><input type="date" id="match-date" name="match-date" required></div> <div class="input-group"><label for="your-partner">Your Partner:</label><input type="text" id="your-partner" name="your-partner" placeholder="Partner's name (optional)" list="player-names"></div> <div class="input-group"><label for="opponent1">Opponent 1:</label><input type="text" id="opponent1" name="opponent1" placeholder="Opponent 1 name" required list="player-names"></div> <div class="input-group"><label for="opponent2">Opponent 2:</label><input type="text" id="opponent2" name="opponent2" placeholder="Opponent 2 name (optional)" list="player-names"></div> <div class="quick-score-buttons"><button type="button" id="btn-quick-win" class="btn btn-quick-score win">I Won (21)</button><button type="button" id="btn-quick-lose" class="btn btn-quick-score lose">I Lost (21)</button></div> <div class="input-group score-group"><label for="your-score">Your Score:</label><div class="input-with-stepper"><button type="button" aria-label="Decrease Your Score" class="stepper-btn minus" data-target="your-score">-</button><input type="number" id="your-score" name="your-score" min="0" max="99" step="1" required><button type="button" aria-label="Increase Your Score" class="stepper-btn plus" data-target="your-score">+</button></div></div> <div class="input-group score-group"><label for="their-score">Their Score:</label><div class="input-with-stepper"><button type="button" aria-label="Decrease Their Score" class="stepper-btn minus" data-target="their-score">-</button><input type="number" id="their-score" name="their-score" min="0" max="99" step="1" required><button type="button" aria-label="Increase Their Score" class="stepper-btn plus" data-target="their-score">+</button></div></div> </div>
+                <p id="log-status-msg" class="status-message" aria-live="polite"></p>
+                <button type="submit" id="log-match-btn" class="btn btn-primary">Log Match</button> <button type="button" id="cancel-edit-btn" class="btn btn-secondary" style="display: none;">Cancel Edit</button> </
+            </form>
+        </section>
+
+        <section id="stats-section" class="stats-section card">
+             <h2>Stats</h2>
+             <div id="stats-display">
+                 <h3 class="chart-title">Recent Sessions (W/L)</h3>
+                 <div class="chart-container bar-chart-container"> <canvas id="session-bar-chart"></canvas> </div>
+                 <hr class="stats-divider">
+
+                 <div class="stat-item"><span class="stat-label">Overall Record:</span> <span class="stat-value" id="stats-overall-wl">0W - 0L</span> (<span class="stat-value" id="stats-overall-percentage">--%</span>) </div>
+                 <div class="stat-item"><span class="stat-label">Total Matches Logged:</span> <span class="stat-value" id="stats-total-matches">0</span></div>
+                 <div class="chart-container pie-chart-container"><canvas id="overall-pie-chart"></canvas></div>
+                 <hr class="stats-divider">
+
+                 <div class="stats-filters">
+                     <div class="filter-group"><label for="filter-your-team">Record for Your Team:</label> <select id="filter-your-team" name="filter-your-team"><option value="ALL">All My Teams (Overall)</option></select></div>
+                     <span class="filter-vs">vs</span>
+                     <div class="filter-group"><label for="filter-opponent-team">Against Opponent Team:</label> <select id="filter-opponent-team" name="filter-opponent-team"><option value="ALL">All Opponents</option></select></div>
+                </div>
+                 <button type="button" id="filter-stats-btn" class="btn btn-secondary">Apply Filters</button>
+                 <div id="detailed-stats-results">
+                     <div class="stat-item"><span class="stat-label" id="detailed-stat-label">Filtered Record:</span> <span class="stat-value" id="detailed-stats-wl">0W - 0L</span> (<span class="stat-value" id="detailed-stats-percentage">--%</span>)</div>
+                     <div class="stat-item"><span class="stat-label">Matches in Filter:</span> <span class="stat-value" id="detailed-stats-total">0</span></div>
+                     <p class="stats-note">(Select teams above and click 'Apply Filters' to see specific records)</p>
+                 </div>
+             </div>
+        </section>
+
+        <section id="history-section" class="history-section card">
+             <h2>Match History</h2>
+             <div class="quick-history-filters"> <button type="button" class="btn btn-quick-filter active" data-filter="all">All Time</button> <button type="button" class="btn btn-quick-filter" data-filter="month">This Month</button> <button type="button" class="btn btn-quick-filter" data-filter="week">This Week</button> <button type="button" class="btn btn-quick-filter" data-filter="today">Today</button> </div>
+             <div id="history-list" aria-live="polite"><p>No matches logged yet.</p></div>
+             <div id="history-loader" class="history-loader" style="display: none;"> <button type="button" id="show-all-history-btn" class="btn btn-outline btn-small">Show All Matches for Period</button> </div>
+        </section>
+
+        <section id="management-section" class="management-section card">
+             <h2>Manage Data</h2>
+             <div class="management-actions"> <button type="button" id="export-json-btn" class="btn btn-manage">Export Logs (JSON)</button> <div class="import-group"> <button type="button" id="import-json-trigger-btn" class="btn btn-manage">Import Logs (JSON)</button> <input type="file" id="import-json-input" accept=".json,application/json" class="visually-hidden" aria-label="Import JSON file"> <p class="import-note">Note: Importing will replace current logs.</p> </div> <button type="button" id="reset-all-btn" class="btn btn-danger">Reset All Logs</button> <p class="reset-note">Warning: Reset permanently deletes all logs stored in this browser.</p> </div>
+        </section>
+
+    </div> <button id="back-to-top" title="Back to Top" aria-label="Scroll back to top">Back to Top ⬆️</button>
+    <textarea id="copy-buffer" aria-hidden="true" class="visually-hidden"></textarea>
+    <datalist id="player-names"></datalist>
+    <footer class="app-footer"> Made by Loong Bong </footer>
+    <script src="script.js"></script>
+</body>
+</html>
