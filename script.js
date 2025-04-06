@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if(opponent2Input) opponent2Input.value = '';
             if(yourScoreInput) yourScoreInput.value = '';
             if(theirScoreInput) theirScoreInput.value = '';
-            if(opponent1Input) opponent1Input.focus();
+            //if(opponent1Input) opponent1Input.focus();
         }
          showStatusMessage(message, 'success'); // Show success message
     };
